@@ -1,0 +1,5 @@
+
+INSTALL
+
+add <plugin name="haxbusterurt" priority="7"/> to the plugins section of b3.xml
+Make sure to choose a uniq priority number.
