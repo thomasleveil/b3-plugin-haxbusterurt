@@ -1,5 +1,63 @@
+HaxBusterUrt plugin for Big Brother Bot (www.bigbrotherbot.com)
+===============================================================
 
-INSTALL
+By Courgette
 
-add <plugin name="haxbusterurt" priority="7"/> to the plugins section of b3.xml
-Make sure to choose a uniq priority number.
+
+Description
+-----------
+
+This plugin helps detecting cheaters in Urban Terror game servers.
+It does hax detection by checking GUID correctness. 
+
+When such a bad guid is discovered, several actions take place :
+ * if admins are playing, they get notified by private message
+ * the cheater is given a notice, so it can be found in Echelon easily
+ * a new B3 event is fired : b3.events.EVT_BAD_GUID so other plugins can act upon
+
+When an admin connects to the game, he is given a list of detected cheaters (if any)
+
+
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~* 
+ *                                                                *
+ *  NOTE: some admin organisations / leagues do not recognize     *
+ *  this method as a proof of hack !                              *
+ *                                                                *
+ *  For many, the only way to prove hacking is to take a demo     *
+ *  of the suspected player.                                      *
+ *                                                                *
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~*
+
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~* 
+ *                                                                *
+ *  NOTE 2: Just a small percentage of hacking players do have    *
+ *  such a corrupted GUID.                                        *
+ *  Thus this plugin wont get rid of most hackers on your server. *
+ *  At the time of writting, the best way to avoid cheaters is    *
+ *  to enforce known cheaters banlists.                           *
+ *                                                                *
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~*
+
+
+Changelog
+---------
+
+16/12/2009 - v0.2 - Courgette
+  beta version
+
+  
+
+Installation
+------------
+
+ * copy haxbusterurt.py into b3/extplugins
+ * update your main b3 config file with :
+
+<plugin name="haxbusterurt" priority="7"/>
+
+
+
+Support
+-------
+
+None until official release
