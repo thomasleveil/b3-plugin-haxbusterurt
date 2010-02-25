@@ -29,10 +29,12 @@
 #    * when plugin is enabled (after having been disabled) it checks all new players
 #    * check all connected players at start
 #    * make sure a given player is checked only once
+# 25/02/2010 - 1.0 - Courgette
+#    * consider players whose guid equals their ip to have unlegitimates guid
 #
 
 __author__  = 'Courgette <courgette@ubu-team.org>'
-__version__ = '0.2'
+__version__ = '0.3'
 
 import b3
 import re
@@ -47,7 +49,7 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
     _adminPlugin = None
     _reValidGuid = re.compile('^[A-F0-9]{32}$')
     _msgDelay = 30 # seconds to wait after an admin connect before sending him messages
-    _adminLevel = 100
+    _adminLevel = 60
 
     def onStartup(self):
         self._adminPlugin = self.console.getPlugin('admin')
@@ -85,6 +87,7 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
         
         
     def onAdminConnect(self, client):
+        self.debug("admin connected")
         haxorNames = []
         for c in self.console.clients.getClientsByLevel():
             if c == client:
@@ -95,6 +98,8 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
             t = threading.Timer(self._msgDelay,
                         client.message, ("^2Haxor detected: ^3%s" % (', '.join(haxorNames)) ,))
             t.start()
+        else:
+            self.debug('no haxor guid currently connected')
                      
                      
     def checkAllClients(self):
@@ -118,12 +123,6 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
         if self._reValidGuid.search(guid) is not None:
             client.setvar(self, 'haxBusted', False)
             self.debug('%s is a valid ioUrT guid' % (guid))
-            return
-        
-        # if guid is the same as ip, then it is a Quake3 client with UrT mod
-        if guid == client.ip:
-            client.setvar(self, 'haxBusted', False)
-            self.debug('%s is a valid Q3 guid' % (guid))
             return
         
         # now we got a contestable guid
