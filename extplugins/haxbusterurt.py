@@ -31,10 +31,15 @@
 #    * make sure a given player is checked only once
 # 25/02/2010 - 1.0 - Courgette
 #    * consider players whose guid equals their ip to have unlegitimates guid
+# 06/05/2010 - 1.1 - Courgette
+#    * add a config file (optional)
+#    * you can choose in the config if you consider a guid which is equals to
+#      the IP legitimate or not
+#    * you can choose in the config if you want to kick bad guid
 #
 
 __author__  = 'Courgette <courgette@ubu-team.org>'
-__version__ = '0.3'
+__version__ = '1.1'
 
 import b3
 import re
@@ -50,6 +55,8 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
     _reValidGuid = re.compile('^[A-F0-9]{32}$')
     _msgDelay = 30 # seconds to wait after an admin connect before sending him messages
     _adminLevel = 60
+    acceptIpForGuid = True
+    doKick = False
 
     def onStartup(self):
         self._adminPlugin = self.console.getPlugin('admin')
@@ -67,8 +74,18 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
 
 
     def onLoadConfig(self):
-        # @todo: config could define a penalty to inflict to bad guid (kick, tempban, ban, etc)
-        pass
+        self.debug('loading config')
+        try:
+            self.acceptIpForGuid = self.config.getboolean('settings', 'allow_guid_equals_to_ip')
+        except:
+            self.acceptIpForGuid = True
+        self.debug('accept a Guid which is equal to the IP : %s' % self.acceptIpForGuid)
+        
+        try:
+            self.doKick = self.config.getboolean('settings', 'kick_bad_guid')
+        except:
+            self.doKick = False
+        self.debug('kick bad guid ? : %s' % self.doKick)
 
 
     def enable(self):
@@ -109,35 +126,47 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
                 
                 
     def checkGuid(self, client):
-        guid = client.guid
-        if guid is None:
-            self.debug('That\'s weird, client @%s has no guid' % client.id)
-            return
         
         isHaxor = client.var(self, 'haxBusted').value
         if isHaxor is not None:
             self.debug('%s was checked before : %s' % (client.name, isHaxor))
             return
         
+        if self.isBadGuid(client):
+            # now we got a contestable guid
+            client.setvar(self, 'haxBusted', True)
+            self.info("player @%s (%s) has a contestable guid : [%s]" % (client.id, client.ip, client.guid))
+            self.console.queueEvent(b3.events.Event(b3.events.EVT_BAD_GUID, client.guid, client)) 
+            client.notice("weird guid detected", None)
+            
+            for c in self.console.clients.getClientsByLevel(min=self._adminLevel):
+                if c == client:
+                    continue
+                c.message('%s^7 is probably hacking. His guid is [^3%s^7]' % (client.exactName, client.guid))
+            
+            if self.doKick:
+                self.info('kicking client because of its GUID')
+                client.kick('Not welcome on this server', keyword="haxbusterurt", silent=True)
+        
+    def isBadGuid(self, client):
+        guid = client.guid
+        
+        if guid is None:
+            self.debug('That\'s weird, client @%s has no guid' % client.id)
+            return False
+        
+        if self.acceptIpForGuid and hasattr(client, 'ip') and client.ip == guid:
+            self.debug('%s is accepted as a guid (same as IP)' % (guid))
+            return False
+        
         # check normal ioUrbanTerror guid
         if self._reValidGuid.search(guid) is not None:
             client.setvar(self, 'haxBusted', False)
             self.debug('%s is a valid ioUrT guid' % (guid))
-            return
+            return False
         
-        # now we got a contestable guid
-        client.setvar(self, 'haxBusted', True)
-        self.info("player @%s (%s) has a contestable guid : [%s]" % (client.id, client.ip, guid))
-        self.console.queueEvent(b3.events.Event(b3.events.EVT_BAD_GUID, guid, client)) 
-        client.notice("weird guid detected", None)
+        return True
         
-        for c in self.console.clients.getClientsByLevel(min=self._adminLevel):
-            if c == client:
-                continue
-            c.message('%s^7 is probably hacking. His guid is [^3%s^7]' % (client.exactName, guid))
-        
-
-
     
 if __name__ == '__main__':
     from b3.fake import fakeConsole
@@ -146,6 +175,25 @@ if __name__ == '__main__':
     from b3.fake import moderator
 
     import time
+    
+    from b3.config import XmlConfigParser
+    
+    conf = XmlConfigParser()
+    conf.setXml("""\
+    <configuration plugin="haxbusterurt">
+        <settings name="settings">
+          <!-- Some Quake3 clients that do not seems to be altered in any way
+          by hacks to report a guid which is equal to their IP.
+          If you set 'No' in this setting, you consider that such guid are 
+          unwanted on your server -->
+            <set name="allow_guid_equals_to_ip">no</set>
+            <!-- Do you want to kick players with bad guid ? -->
+            <set name="kick_bad_guid">yes</set>
+        </settings>
+    </configuration>
+
+    """)
+    
     
     class FakePlugin(b3.plugin.Plugin):
         requiresConfigFile = False
@@ -160,7 +208,7 @@ if __name__ == '__main__':
     
     
     print '-------- instanciating Haxbuster ------------'
-    p = HaxbusterurtPlugin(fakeConsole)
+    p = HaxbusterurtPlugin(fakeConsole, conf)
     fakeConsole._plugins['haxbuster'] = p
     p._msgDelay = 2
     p.onStartup()

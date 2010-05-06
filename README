@@ -14,6 +14,7 @@ When such a bad guid is discovered, several actions take place :
  * if admins are playing, they get notified by private message
  * the cheater is given a notice, so it can be found in Echelon easily
  * a new B3 event is fired : b3.events.EVT_BAD_GUID so other plugins can act upon
+ * if you choose so in the config file, the player is kicked
 
 When an admin connects to the game, he is given a list of detected cheaters (if any)
 
@@ -42,8 +43,25 @@ When an admin connects to the game, he is given a list of detected cheaters (if 
 Changelog
 ---------
 
-16/12/2009 - v0.2 - Courgette
-  beta version
+15/12/2009 - 0.1 - Courgette
+   * detects when guid is not a ioUrT guid nor a Q3 guid
+   * upon client connect with bad guid :
+       o give the player a notice so it can be found in echelon
+       o pm ingame admins
+   * upon admin connection : pm admin of eventual ingame hackers
+15/12/2009 - 0.2 - Courgette
+   * will fire event b3.events.EVT_BAD_GUID when bad guid is found so other
+     plugins can react to such event
+   * when plugin is enabled (after having been disabled) it checks all new players
+   * check all connected players at start
+   * make sure a given player is checked only once
+25/02/2010 - 1.0 - Courgette
+   * consider players whose guid equals their ip to have unlegitimates guid
+06/05/2010 - 1.1 - Courgette
+   * add a config file (optional)
+   * you can choose in the config if you consider a guid which is equals to
+     the IP legitimate or not
+   * you can choose in the config if you want to kick bad guid
 
   
 
@@ -51,13 +69,9 @@ Installation
 ------------
 
  * copy haxbusterurt.py into b3/extplugins
+ * copy plugin_haxbusterurt.xml to your config folder
  * update your main b3 config file with :
 
-<plugin name="haxbusterurt" priority="7"/>
+<plugin name="haxbusterurt" priority="7" config="@conf/extplugins/plugin_haxbusterurt.xml"/>
 
 
-
-Support
--------
-
-None until official release
