@@ -62,7 +62,11 @@ Changelog
    * you can choose in the config if you consider a guid which is equals to
      the IP legitimate or not
    * you can choose in the config if you want to kick bad guid
-
+07/05/2010 - 1.2 - Courgette
+   * rename the config file option allow_guid_equals_to_ip to allow_empty_guid
+     to make more sense. (B3 uses players'IP for guid if cl_guid is empty)
+   * cache check result for client having empty guid
+   * Does not accept empty cl_guid by default
   
 
 Installation
@@ -74,4 +78,10 @@ Installation
 
 <plugin name="haxbusterurt" priority="7" config="@conf/extplugins/plugin_haxbusterurt.xml"/>
 
+
+Support
+-------
+
+Support is only provided on www.bigbrotherbot.net forums on the following topic :
+http://www.bigbrotherbot.net/forums/releases/hax-buster-(urt)/
 

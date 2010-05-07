@@ -1,10 +1,7 @@
 <configuration plugin="haxbusterurt">
 	<settings name="settings">
-	  <!-- Some Quake3 clients that do not seems to be altered in any way
-	  by hacks to report a guid which is equal to their IP.
-	  If you set 'No' in this setting, you consider that such guid are 
-	  unwanted on your server -->
-		<set name="allow_guid_equals_to_ip">yes</set>
+	  <!-- Do you accept clients with an empty cl_guid ? -->
+		<set name="allow_empty_guid">yes</set>
 		<!-- Do you want to kick players with bad guid ? -->
 		<set name="kick_bad_guid">no</set>
 	</settings>

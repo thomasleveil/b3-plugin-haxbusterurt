@@ -36,10 +36,14 @@
 #    * you can choose in the config if you consider a guid which is equals to
 #      the IP legitimate or not
 #    * you can choose in the config if you want to kick bad guid
-#
+# 07/05/2010 - 1.2 - Courgette
+#    * rename the config file option allow_guid_equals_to_ip to allow_empty_guid
+#      to make more sense. (B3 uses players'IP for guid if cl_guid is empty)
+#    * cache check result for client having empty guid
+#    * Does not accept empty cl_guid by default
 
 __author__  = 'Courgette <courgette@ubu-team.org>'
-__version__ = '1.1'
+__version__ = '1.2'
 
 import b3
 import re
@@ -55,7 +59,7 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
     _reValidGuid = re.compile('^[A-F0-9]{32}$')
     _msgDelay = 30 # seconds to wait after an admin connect before sending him messages
     _adminLevel = 60
-    acceptIpForGuid = True
+    acceptEmptyGuid = False
     doKick = False
 
     def onStartup(self):
@@ -76,10 +80,10 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
     def onLoadConfig(self):
         self.debug('loading config')
         try:
-            self.acceptIpForGuid = self.config.getboolean('settings', 'allow_guid_equals_to_ip')
+            self.acceptEmptyGuid = self.config.getboolean('settings', 'allow_empty_guid')
         except:
-            self.acceptIpForGuid = True
-        self.debug('accept a Guid which is equal to the IP : %s' % self.acceptIpForGuid)
+            self.acceptEmptyGuid = True
+        self.debug('accept empty Guid ? : %s' % self.acceptEmptyGuid)
         
         try:
             self.doKick = self.config.getboolean('settings', 'kick_bad_guid')
@@ -126,15 +130,8 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
                 
                 
     def checkGuid(self, client):
-        
-        isHaxor = client.var(self, 'haxBusted').value
-        if isHaxor is not None:
-            self.debug('%s was checked before : %s' % (client.name, isHaxor))
-            return
-        
         if self.isBadGuid(client):
             # now we got a contestable guid
-            client.setvar(self, 'haxBusted', True)
             self.info("player @%s (%s) has a contestable guid : [%s]" % (client.id, client.ip, client.guid))
             self.console.queueEvent(b3.events.Event(b3.events.EVT_BAD_GUID, client.guid, client)) 
             client.notice("weird guid detected", None)
@@ -149,23 +146,32 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
                 client.kick('Not welcome on this server', keyword="haxbusterurt", silent=True)
         
     def isBadGuid(self, client):
-        guid = client.guid
+        ## have we checked this client before ?
+        cachedResult = client.var(self, 'haxBusted').value
+        if cachedResult is not None:
+            self.debug('%s was checked before : %s' % (client.name, cachedResult))
+            return cachedResult
         
-        if guid is None:
-            self.debug('That\'s weird, client @%s has no guid' % client.id)
+        ## empty guid client property o_O should not happen
+        if client.guid is None:
+            self.warn('That\'s weird, client @%s has no guid' % client.id)
             return False
         
-        if self.acceptIpForGuid and hasattr(client, 'ip') and client.ip == guid:
-            self.debug('%s is accepted as a guid (same as IP)' % (guid))
-            return False
+        ## guid == ip --> reveals a clients that connects with an empty cl_guid
+        if hasattr(client, 'ip') and client.ip == client.guid:
+            self.info('player @%s (%s) has an empty guid' % (client.id, client.ip))
+            client.setvar(self, 'haxBusted', not self.acceptEmptyGuid)
+            return not self.acceptEmptyGuid
         
         # check normal ioUrbanTerror guid
-        if self._reValidGuid.search(guid) is not None:
+        if self._reValidGuid.search(client.guid) is not None:
             client.setvar(self, 'haxBusted', False)
-            self.debug('%s is a valid ioUrT guid' % (guid))
+            self.info('%s is a valid ioUrT guid' % (client.guid))
             return False
-        
-        return True
+        else:
+            self.info('%s is a not a valid ioUrT guid' % (client.guid))
+            client.setvar(self, 'haxBusted', True)
+            return True
         
     
 if __name__ == '__main__':
@@ -182,11 +188,8 @@ if __name__ == '__main__':
     conf.setXml("""\
     <configuration plugin="haxbusterurt">
         <settings name="settings">
-          <!-- Some Quake3 clients that do not seems to be altered in any way
-          by hacks to report a guid which is equal to their IP.
-          If you set 'No' in this setting, you consider that such guid are 
-          unwanted on your server -->
-            <set name="allow_guid_equals_to_ip">no</set>
+            <!-- Do you accept clients with an empty cl_guid ? -->
+            <set name="allow_empty_guid">no</set>
             <!-- Do you want to kick players with bad guid ? -->
             <set name="kick_bad_guid">yes</set>
         </settings>
@@ -226,6 +229,8 @@ if __name__ == '__main__':
     player2.connects(3)
     time.sleep(1)
     
+    p.isBadGuid(player2)
+    time.sleep(1)
  
     player2 = FakeClient(fakeConsole, name="K!773R", exactName="K!773R",
                          ip="12.12.113.11", guid="/me is hacking") 
