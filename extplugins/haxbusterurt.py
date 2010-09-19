@@ -1,6 +1,6 @@
 #
-# BigBrotherBot(B3) (www.bigbrotherbot.com)
-# Copyright (C) 2009 Courgette
+# BigBrotherBot(B3) (www.bigbrotherbot.net)
+# Copyright (C) 2009 courgette@bigbrotherbot.n,et
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@
 #    * cache check result for client having empty guid
 #    * Does not accept empty cl_guid by default
 
-__author__  = 'Courgette <courgette@ubu-team.org>'
+__author__  = 'Courgette <courgette@bigbrotherbot.net>'
 __version__ = '1.2'
 
 import b3
