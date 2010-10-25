@@ -41,9 +41,12 @@
 #      to make more sense. (B3 uses players'IP for guid if cl_guid is empty)
 #    * cache check result for client having empty guid
 #    * Does not accept empty cl_guid by default
+# 25/10/2010 - 1.3 - Courgette
+#    * add experimental check on ClientUserInfo lines (no kick will ever happens when 
+#      a supposed cheat is detected that way)
 
 __author__  = 'Courgette <courgette@bigbrotherbot.net>'
-__version__ = '1.2'
+__version__ = '1.3'
 
 import b3
 import re
@@ -53,10 +56,55 @@ import b3.plugin
 import b3.functions
 
 #--------------------------------------------------------------------------------------------------
+# below is a hack to make the Iourt41Parser raise a new EVT_HAXBUSTER_CLIENTUSERINFO with
+# raw data whenever a ClientUserInfo line is parsed from the game log
+#--------------------------------------------------------------------------------------------------
+import string
+from b3.parsers import iourt41
+def newIourt41ParseLine(self, line):           
+    m = self.getLineParts(line)
+    if not m:
+        return False
+
+    match, action, data, client, target = m
+
+    func = 'On%s' % string.capwords(action).replace(' ','')
+    
+    #self.debug("-==== FUNC!!: " + func)
+    if func == 'OnClientuserinfo':
+        bclient = self.parseUserInfo(data)
+        if bclient and bclient.has_key('cid'):
+            client = self.getByCidOrJoinPlayer(bclient['cid'])
+            self.queueEvent(b3.events.Event(b3.events.EVT_HAXBUSTER_CLIENTUSERINFO, data, client))
+    
+    if hasattr(self, func):
+        func = getattr(self, func)
+        event = func(action, data, match)
+
+        if event:
+            self.queueEvent(event)
+    elif action in self._eventMap:
+        self.queueEvent(b3.events.Event(
+                self._eventMap[action],
+                data,
+                client,
+                target
+            ))
+    else:
+        self.queueEvent(b3.events.Event(
+                b3.events.EVT_UNKNOWN,
+                str(action) + ': ' + str(data),
+                client,
+                target
+            ))
+iourt41.Iourt41Parser.parseLine = newIourt41ParseLine
+
+#--------------------------------------------------------------------------------------------------
 class HaxbusterurtPlugin(b3.plugin.Plugin):
     requiresConfigFile = False
     _adminPlugin = None
     _reValidGuid = re.compile('^[A-F0-9]{32}$')
+    _reValidClientUserInfo = re.compile(r"""^[0-9]+ +\\ip\\[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:[0-9]{1,6}(\\challenge\\[0-9]+\\qport\\[0-9]+\\protocol\\68)?\\name\\[^ \t\n\r\f\v]+\\racered\\[0-9]{1}\\raceblue\\[0-9]{1}\\rate\\[0-9]+\\ut_timenudge\\[0-9]+\\cg_rgb\\[0-9]{1,3} [0-9]{1,3} [0-9]{1,3}(\\funred\\[^\\]+)?(\\funblue\\[^\\]+)?\\cg_predictitems\\[01]{1}\\cg_physics\\[01]{1}\\snaps\\[0-9]{1,2}\\model\\[^ \t\n\r\f\v]+\\headmodel\\[^ \t\n\r\f\v]+\\team_model\\[^ \t\n\r\f\v]+\\team_headmodel\\[^\t\n\r\f\v]+\\color1\\[0-9]{1,2}\\color2\\[0-9]{1,2}\\handicap\\100\\sex\\[^ \t\n\r\f\v]+\\cl_anonymous\\[01]{1}\\gear\\[^ \t\n\r\f\v]+\\teamtask\\[0-9]+\\cl_guid\\[A-F0-9]{32}\\weapmodes\\[0-2]{20}$""")
     _msgDelay = 30 # seconds to wait after an admin connect before sending him messages
     _adminLevel = 60
     acceptEmptyGuid = False
@@ -70,9 +118,11 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
         # create a new type of event so other plugin can react when we 
         # detect bad guid
         self.console.Events.createEvent('EVT_BAD_GUID', 'Bad guid detected')
+        self.console.Events.createEvent('EVT_HAXBUSTER_CLIENTUSERINFO', 'clientUserInfo hook for haxbuster')
         
         self._adminLevel = self._adminPlugin.config.getint('settings', 'admins_level')
         self.registerEvent(b3.events.EVT_CLIENT_AUTH)
+        self.registerEvent(b3.events.EVT_HAXBUSTER_CLIENTUSERINFO)
         t = threading.Timer(2, self.checkAllClients)
         t.start()
 
@@ -97,10 +147,13 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
         self.checkAllClients()
             
             
-    def onEvent(self, event):
+    def onEvent(self, event):       
         if not event.client:
             return
-    
+
+        if event.type == b3.events.EVT_HAXBUSTER_CLIENTUSERINFO:
+            self.checkClientUserInfo(event.data, event.client)
+
         if event.type == b3.events.EVT_CLIENT_AUTH:
             self.checkGuid(event.client)
             if event.client.maxLevel >= self._adminLevel:
@@ -172,8 +225,24 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
             self.info('%s is a not a valid ioUrT guid' % (client.guid))
             client.setvar(self, 'haxBusted', True)
             return True
-        
     
+    def checkClientUserInfo(self, data, client):
+        self.debug('checking ClientUserInfo line integrity | %s' % data)
+        if self._reValidClientUserInfo.search(data) is None:
+            self.info('[%s] detected as corrupted' % data)
+            client.notice("weird ClientUserInfo detected", None)
+            
+            for c in self.console.clients.getClientsByLevel(min=self._adminLevel):
+                if c == client:
+                    continue
+                c.message('%s^7 is probably hacking. His user info seems corrupted' % (client.exactName))
+            
+            #if self.doKick:
+            #    self.info('kicking client because of its ClientUserInfo')
+            #    client.kick('Not welcome on this server', keyword="haxbusterurt", silent=True)
+        else:
+            self.debug('ClientUserInfo looks all right')
+                
 if __name__ == '__main__':
     from b3.fake import fakeConsole
     from b3.fake import FakeClient
