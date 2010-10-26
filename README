@@ -67,9 +67,7 @@ Changelog
      to make more sense. (B3 uses players'IP for guid if cl_guid is empty)
    * cache check result for client having empty guid
    * Does not accept empty cl_guid by default
-25/10/2010 - 1.3 - Courgette
-   * add experimental check on ClientUserInfo lines (no kick will ever happens when 
-     a supposed cheat is detected that way)
+  
 
 Installation
 ------------
