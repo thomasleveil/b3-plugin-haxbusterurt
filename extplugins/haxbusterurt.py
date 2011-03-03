@@ -41,9 +41,11 @@
 #      to make more sense. (B3 uses players'IP for guid if cl_guid is empty)
 #    * cache check result for client having empty guid
 #    * Does not accept empty cl_guid by default
+# 03/03/2011 - 1.3 - Courgette
+#    * ingore bots when checking clients
 
 __author__  = 'Courgette <courgette@bigbrotherbot.net>'
-__version__ = '1.2'
+__version__ = '1.3'
 
 import b3
 import re
@@ -157,6 +159,11 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
             self.warn('That\'s weird, client @%s has no guid' % client.id)
             return False
         
+        ## do not warn for AI bots
+        if hasattr(client, 'ip') and client.ip == '0.0.0.0' and hasattr(client, 'skill'):
+            self.debug("AI bots aren't cheating")
+            return False
+        
         ## guid == ip --> reveals a clients that connects with an empty cl_guid
         if hasattr(client, 'ip') and client.ip == client.guid:
             self.info('player @%s (%s) has an empty guid' % (client.id, client.ip))
@@ -230,6 +237,12 @@ if __name__ == '__main__':
     time.sleep(1)
     
     p.isBadGuid(player2)
+    time.sleep(1)
+ 
+    player2 = FakeClient(fakeConsole, name="I'm a AI bot", exactName="AIBOT",
+                         ip="0.0.0.0", guid="BOT")
+    player2.skill = 132 
+    player2.connects(11)
     time.sleep(1)
  
     player2 = FakeClient(fakeConsole, name="K!773R", exactName="K!773R",
