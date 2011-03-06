@@ -69,6 +69,8 @@ Changelog
    * Does not accept empty cl_guid by default
  03/03/2011 - 1.3 - Courgette
     * ingore bots when checking clients
+ 05/03/2011 - 1.3.1 - Courgette
+    * better bot detection
 
 Installation
 ------------

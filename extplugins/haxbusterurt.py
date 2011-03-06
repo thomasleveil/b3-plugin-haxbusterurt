@@ -42,10 +42,13 @@
 #    * cache check result for client having empty guid
 #    * Does not accept empty cl_guid by default
 # 03/03/2011 - 1.3 - Courgette
-#    * ingore bots when checking clients
+#    * ingnore bots when checking clients
+# 05/03/2011 - 1.3.1 - Courgette
+#    * better bot detection
+
 
 __author__  = 'Courgette <courgette@bigbrotherbot.net>'
-__version__ = '1.3'
+__version__ = '1.3.1'
 
 import b3
 import re
@@ -160,7 +163,7 @@ class HaxbusterurtPlugin(b3.plugin.Plugin):
             return False
         
         ## do not warn for AI bots
-        if hasattr(client, 'ip') and client.ip == '0.0.0.0' and hasattr(client, 'skill'):
+        if hasattr(client, 'ip') and client.ip == '0.0.0.0' and client.guid.startswith('BOT'):
             self.debug("AI bots aren't cheating")
             return False
         
