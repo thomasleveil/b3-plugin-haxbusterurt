@@ -1,8 +1,34 @@
 <configuration plugin="haxbusterurt">
 	<settings name="settings">
-	  <!-- Do you accept clients with an empty cl_guid ? -->
+        <!-- From which level are admins from ?
+         When a hacker is discovered, all connected players from this level and above will be notified.
+              0 : guest
+              1 : user
+              2 : regular
+              20 : moderator
+              40 : admin
+              60 : fulladmin
+              80 : senioradmin
+              100 : superadmin
+         -->
+        <set name="notify_players_from_level">20</set>
+
+        <!-- Do you accept players with an empty cl_guid ? -->
 		<set name="allow_empty_guid">yes</set>
-		<!-- Do you want to kick players with bad guid ? -->
-		<set name="kick_bad_guid">no</set>
+
+		<!-- What penalty to give to players having bad guid ? (none, kick, tempban, permban) -->
+		<set name="bad_guid_penalty">kick</set>
+
+        <!-- What penalty to give to players connecting from 1337 port ? (none, kick, tempban, permban) -->
+		<set name="1337_port_penalty">kick</set>
+
+        <!-- How long to tempban for if you choose to tempban.
+            examples :
+             20m : 20 minutes
+             4h : 4 hours
+             1d : 1 day
+             2w : 2 weeks
+        -->
+        <set name="tempban_duration">1w</set>
 	</settings>
 </configuration>

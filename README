@@ -8,15 +8,16 @@ Description
 -----------
 
 This plugin helps detecting cheaters in Urban Terror game servers.
-It does hax detection by checking GUID correctness. 
+It does hax detection by checking GUID correctness or the port
+players are connecting from.
 
-When such a bad guid is discovered, several actions take place :
+When a cheater is discovered, several actions take place :
  * if admins are playing, they get notified by private message
  * the cheater is given a notice, so it can be found in Echelon easily
- * a new B3 event is fired : b3.events.EVT_BAD_GUID so other plugins can act upon
- * if you choose so in the config file, the player is kicked
+ * a new B3 event is fired : EVT_BAD_GUID or EVT_1337_PORT so other plugins can act upon
+ * if you choose so in the config file, the player is kicked, tempbanned, or permbanned
 
-When an admin connects to the game, he is given a list of detected cheaters (if any)
+When an admin connects to the game, he is given the list of detected cheaters (if any)
 
 
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~* 
@@ -32,9 +33,9 @@ When an admin connects to the game, he is given a list of detected cheaters (if 
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~* 
  *                                                                *
  *  NOTE 2: Just a small percentage of hacking players do have    *
- *  such a corrupted GUID.                                        *
+ *  a corrupted GUID or connects from port 1337.                  *
  *  Thus this plugin wont get rid of most hackers on your server. *
- *  At the time of writting, the best way to avoid cheaters is    *
+ *  At the time of writing, the best way to avoid cheaters is    *
  *  to enforce known cheaters banlists.                           *
  *                                                                *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~**~*~*~*~*~*~*~*~*~*~*~*~*
@@ -71,6 +72,10 @@ Changelog
     * ingore bots when checking clients
  05/03/2011 - 1.3.1 - Courgette
     * better bot detection
+ 10/11/2011 - 1.4 - Courgette
+    * can detect players connecting from port 1337
+    * can define in config which kind of penalty apply (none, kick, tempban, permban)
+
 
 Installation
 ------------
